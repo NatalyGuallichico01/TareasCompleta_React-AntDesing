@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+import { Button, message } from 'antd';
 import "../styles/App.css";
+import UserInfo from "./UserInfo";
+import UserTodos from "./UserTodos";
 
 function App() {
   //variable de estado
@@ -26,14 +29,35 @@ function App() {
   const handleChangeUserId = (value) => {
     setUserId((prevState) => prevState + value);
   };
-  const handleCompleted = (position) => {
+  const handleCompleted =async (position) => {
+    //llamado (asincrono) a la API para guardar en mi base de datos
+    //###########EJEMPLO DE GUARDAR EN UN BDD#############
+    const todoToUpdate=todos[position];
+    todoToUpdate.completed=true;
+    console.log('todoToUpdate',todoToUpdate);
+    console.log('todoToUpdate String', JSON.stringify(todoToUpdate));
+    
+    const responsive=await fetch (`https://jsonplaceholder.typicode.com/todos/${todoToUpdate.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(todoToUpdate),
+      headers: {
+        'Content-type': 'application/json; charset=UTF-8',
+      },
+    });
+const data=await responsive.json();
+    message.success('Tarea completada');
+    //###########FIN EJEMPLO DE GUARDAR EN UN BDD##########
+
     const newTodos = [...todos];
     newTodos[position].completed = true;
     setTodos(newTodos);
   };
   const handleDelete = (position) => {
+    //llamado (asincrono) a la API para eliminar en mi base de datos
     const newTodos = todos.filter((todo, index) => index !== position);
     setTodos(newTodos);
+
+
   };
   if (!userInfo) {
     return "cargando datos...";
@@ -43,66 +67,15 @@ function App() {
     <>
       <div>
         {userId > 1 && (
-          <button onClick={() => handleChangeUserId(-1)}>Anterior</button>
+          <Button type="primary" onClick={() => handleChangeUserId(-1)}>Anterior</Button>
         )}
         {userId < 10 && (
-          <button onClick={() => handleChangeUserId(1)}>Siguiente</button>
+          <Button type="primary" onClick={() => handleChangeUserId(1)}>Siguiente</Button>
         )}
       </div>
-      <div>
-        <div>
-          <strong>Nombre:</strong>
-          {userInfo.name}
-        </div>
-        <div>
-          <strong>Usuario:</strong>
-          {userInfo.username}
-        </div>
-        <div>
-          <strong>Email:</strong>
-          {userInfo.email}
-        </div>
-        <div>
-          <strong>Web:</strong>
-          {userInfo.website}
-        </div>
-        <div>
-          <strong>Telefono:</strong>
-          {userInfo.phone}
-        </div>
-      </div>
+      <UserInfo user={userInfo}/>
 
-      <div>
-        <h1>Lista de Tareas</h1>
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Estado</th>
-              <th>Eliminar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {todos.map((todo, index) => (
-              <tr key={todo.id}>
-                <td>{todo.title}</td>
-                <td>
-                  {todo.completed ? (
-                    "Completada"
-                  ) : (
-                    <button onClick={() => handleCompleted(index)}>
-                      Marcar como Completada
-                    </button>
-                  )}
-                </td>
-                <td>
-                  <button onClick={() => handleDelete(index)}>Eliminar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <UserTodos todos={todos} onCompleted={handleCompleted} onDelete={handleDelete} />
     </>
   );
 }
